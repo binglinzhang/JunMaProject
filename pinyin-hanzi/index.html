@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>test</title>
+    <link rel="stylesheet" href="./bootstrap.css">
+    <style>
+        ul {
+            list-style: none;
+        }
+        .input-center {
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+        .content {
+            width: 100%;
+            margin: 0 auto;
+        }
+        .divLine {
+            display: inline-block;
+        }
+        .divLine span {
+            margin-right: 30px;
+        }
+        .divLine input {
+            padding-left: 10px;
+        }
+        .btn-center {
+            float: none;
+            margin: 0 auto;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="input-group col-md-3 col-sm-3 col-lg-4 input-center">
+        <input class="form-control" placeholder="输入拼音，中间以空格隔开" aria-describedby="basic-addon2" id='get-input'>
+        <span class="input-group-addon btn btn-info" id="basic-addon2">search</span>
+    </div>
+    <br/>
+    <div class="checkbox" style="margin-left: 40px;">
+        <input type="checkbox" id='gobalAll-input' onclick="gobalAll(this)"><span>全选/反选</span>
+    </div>
+    <div class="content">
+        <ul></ul>
+    </div>
+    <div class="col-md-2 col-sm-2 col-lg-2 btn-center">
+        <button class="btn btn-info btn-lg btn-block">下一步</button>
+    </div>
+
+</body>
+<script src='./jquery-1.12.4.min.js'></script>
+<script>
+    $('#get-input').keyup(e => { //enter监听事件
+        if (e.keyCode === 13) {
+            handle()
+        }
+    })
+
+    $('#basic-addon2').click(() => { //点击事件
+        handle()
+    })
+
+    function handle() {  //处理数据请求及响应
+        let inputValArr = $('#get-input').val().trim().split(" ")
+        $.ajax({
+            "type": "get",
+            "url": "/search",
+            "data": $.param({
+                'searchContent': inputValArr
+            }),
+            "success": function(data) {
+                console.log(data)
+                document.querySelector('ul').innerHTML = ''
+                let docFragment = document.createDocumentFragment()
+                if (data !== 'Not Found!') {
+                    let
+                        headStr = data[0].value,
+                        tailStr = data[1].value,
+                        count = 101
+                    for (head of headStr) {
+                        let result = ''
+                        for (tail of tailStr) {
+                            let classNameTemp = 'class' + count
+                            result += `<div class='checkbox divLine'><input type='checkbox' class=${classNameTemp} onclick='setSelectAll(this)'><span>` + head + tail + " " + '</span></div>'
+                        }
+                        li = document.createElement('li')
+                        li.innerHTML = "<div class='checkbox divHead'><input type='checkbox' onclick='selectAll(this)' onclick='setGobalAll(this)'><b>" + head + "</b></div>" + result
+                        docFragment.appendChild(li)
+                        count += 2
+                    }
+                    document.querySelector('.btn-center').style.display = 'block'
+                } else {
+                    li = document.createElement('li')
+                    li.innerHTML = data
+                    docFragment.appendChild(li)
+                }
+                document.querySelector('ul').appendChild(docFragment)
+            }
+        })
+    }
+
+    function gobalAll(ele) {    //全局选中
+        if (ele.checked) {
+            $('#gobalAll-input').prop('checked', false)
+            $('input[type=checkbox]').prop('checked', true)
+        } else {
+            $('#gobalAll-input').prop('checked', true)
+            $('input[type=checkbox]').prop('checked', false)
+        }
+    }
+
+    function setGobalAll(ele) {     //全局选择联动
+        var obj = document.getElementsByClassName(ele.parentNode.className)
+        var selectCount = 0
+        for (let i = 0; i < obj.length; i++) {
+            if (obj[i].firstChild.checked === true) {
+                selectCount++
+            }
+        }
+        if (obj.length === selectCount) {
+            document.querySelector('#gobalAll-input').checked = true
+        } else {
+            document.querySelector('#gobalAll-input').checked = false
+        }
+    }
+
+    function selectAll(ele) {   //单个全选
+        if (ele.checked) {
+            ele.checked = true
+            ele.parentNode.parentNode.classList.add('selectLi')
+            $('.selectLi input').prop('checked', true)
+            ele.parentNode.parentNode.classList.remove('selectLi')
+        } else {
+            ele.checked = false
+            ele.parentNode.parentNode.classList.add('selectLi')
+            $('.selectLi input').prop('checked', false)
+            ele.parentNode.parentNode.classList.remove('selectLi')
+        }
+        setGobalAll(ele)
+    }
+
+    function setSelectAll(ele) {    //单个全选联动
+        var obj = document.getElementsByClassName(ele.className)
+        var selectCount = 0
+        for (let i = 0; i < obj.length; i++) {
+            if (obj[i].checked === true) {
+                selectCount++
+            }
+        }
+        if (obj.length === selectCount) {
+            ele.parentNode.parentNode.firstChild.firstChild.checked = true
+        } else {
+            ele.parentNode.parentNode.firstChild.firstChild.checked = false
+        }
+    }
+</script>
+</html>
