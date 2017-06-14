@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>加载时显示图片</title>
+	<script type="text/javascript" src="jquery-1.8.2.js"></script>
+</head>
+<body>
+	  <input value="Text_ajax函数" type="button" onclick="test_ajax()"/>
+    <div id="showResult"></div>
+<script type="text/javascript">
+function test_ajax(){
+   $.ajax(
+   {
+      type:"GET",//通常会用到两种：GET,POST。默认是：GET
+      url:"a.php",//(默认: 当前页地址) 发送请求的地址
+      dataType:"html",//预期服务器返回的数据类型。
+      beforeSend:beforeSend, //发送请求
+      success:callback, //请求成功
+      error:error,//请求出错 
+      complete:complete//请求完成
+   });
+}
+function error(XMLHttpRequest, textStatus, errorThrown){
+  // 通常情况下textStatus和errorThown只有其中一个有值 
+  $("#showResult").append("<div>请求出错啦！</div>");
+}
+function beforeSend(XMLHttpRequest){
+  $("#showResult").append("<div><img src='loading.gif' /><div>");
+}
+function complete(XMLHttpRequest, textStatus){
+  $("#showResult").remove();
+}
+function callback(msg){
+  $("#showResult").append("<div>请求成功，回传数:"+msg+"<div>");
+}
+</script>
+</body>
+</html>

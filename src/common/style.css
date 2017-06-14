@@ -1,0 +1,108 @@
+@charset 'UTF-8';
+
+body
+{
+    min-width: 400px;
+}
+
+div.bg
+{
+    position: fixed;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url(../resource/bg.jpg) no-repeat;
+    background-size: cover;
+}
+
+.title
+{
+    width: 364px;
+    height: 110px;
+    margin: 0 auto;
+    background: url(../resource/title.png) no-repeat center center;
+    background-size: contain;
+}
+
+ul
+{
+    list-style: none;
+}
+
+.input-center
+{
+    margin: 0 auto;
+}
+
+.content
+{
+    overflow-y: auto;
+    width: 60%;
+    height: 200px;
+    margin: 0 auto;
+    border: 0 solid #64b1f5;
+}
+
+.divLine
+{
+    display: inline-block;
+}
+
+.divLine span
+{
+    margin-right: 30px;
+}
+
+.divLine input
+{
+    padding-left: 10px;
+}
+
+.btn-center
+{
+    display: none;
+    float: none;
+    margin: 0 auto;
+}
+
+.list-choice
+{
+    width: 60%;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.list-choice li
+{
+    display: inline-block;
+}
+
+.list-choice span
+{
+    margin-right: 28px;
+}
+
+div.example
+{
+    width: 25%;
+    margin: 0 auto;
+    margin-top: 10px;
+    text-align: left;
+    color: white;
+}
+
+div.selectAll
+{
+    width: 60%;
+    margin: 0 auto;
+    margin-top: 10px;
+    padding-left: 40px;
+    text-align: left;
+}
+
+.list-choice-container > div > input
+{
+    margin-right: 5px;
+}

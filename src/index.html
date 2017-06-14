@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>zbl-prc</title>
+    <link rel="stylesheet" href="./common/bootstrap.css">
+    <link rel="stylesheet" href="./common/style.css">
+</head>
+
+<body>
+    <div class="bg"></div>
+
+    <div class="title"></div>
+
+    <div class="input-group col-md-3 col-sm-3 col-xs-3 col-lg-3 input-center">
+        <input class="form-control" placeholder="输入拼音，中间以空格隔开" aria-describedby="basic-addon2" id='get-input'>
+        <span class="input-group-addon btn btn-info" id="basic-addon2">search</span>
+    </div>
+    <div class="example">示例：you li</div>
+
+    <div class="list-choice"></div>
+
+    <div class="content"></div>
+
+    <div class="checkbox selectAll">
+        <input type="checkbox" id='gobalAll-input' onclick="gobalAll(this)"><span>全选/反选</span>
+    </div>
+
+    <div class="col-md-2 col-sm-2 col-lg-2 btn-center">
+        <button class="btn btn-info btn-lg btn-block">下一步</button>
+    </div>
+    <div class="loading"></div>
+
+
+    <script id="list-choice" type="text/x-dot-template">
+        <div class='list-choice-container'>
+            <div>
+                <input type='checkbox' onclick='selectHead(this)'><b><span>{{=it.inputValArr[0] }}:</span></b>
+            </div>
+            <ul>
+                {{~it.headArr:value:index}}
+                <li>
+                    <div class='checkbox listChoice'><input type='checkbox' class='headSel' onclick='headTailAll(this)'><span>{{= value }}</span></div>
+                </li>
+                {{~}}
+            </ul>
+        </div>
+
+        <div class='list-choice-container'>
+            <div>
+                <input type='checkbox' onclick='selectTail(this)'><b><span>{{=it.inputValArr[1] }}:</span></b>
+            </div>
+            <ul>
+                {{~it.tailArr:value:index}}
+                <li>
+                    <div class='checkbox listChoice'><input type='checkbox' class='tailSel' onclick='headTailAll(this)'><span>{{= value }}</span></div>
+                </li>
+                {{~}}
+            </ul>
+        </div>
+    </script>
+
+    <script id="content" type="text/x-dot-template">
+        <ul>
+            {{~it.headArr:headVal:index}}
+            <li>
+                <div class='checkbox divHead'>
+                    <input type='checkbox' onclick='selectAll(this)' onclick='setGobalAll(this)'>
+                    <b>{{= headVal }}</b>
+                </div>
+                {{~it.tailArr:tailVal}}
+                <div class='checkbox divLine'>
+                    <input type='checkbox' class={{='class-' + index }} onclick='setSelectAll(this)'>
+                    <span>{{= headVal + tailVal }}</span>
+                </div>
+                {{~}}
+            </li>
+            {{~}}
+        </ul>
+    </script>
+
+</body>
+<script src='./common/jquery-1.12.4.min.js'></script>
+<script src='./common/doT.min.js'></script>
+
+<script>
+    function selectHead(ele) {
+        if (ele.checked) {
+            $('.headSel').prop('checked', true)
+        } else {
+            $('.headSel').prop('checked', false)
+        }
+        // headTailAll(ele)
+    }
+
+    function selectTail(ele) {
+        if (ele.checked) {
+            $('.tailSel').prop('checked', true)
+        } else {
+            $('.tailSel').prop('checked', false)
+        }
+        // headTailAll(ele)
+    }
+
+    function headTailAll(ele) { //联动
+        $('#gobalAll-input').prop('checked', false)
+        var obj = document.getElementsByClassName(ele.className)
+        var selectCount = 0
+        if (obj.length) {
+            for (let i = 0; i < obj.length; i++) {
+                if (obj[i].checked === true) {
+                    selectCount++
+                }
+            }
+            let inputEle = ele.parentNode.parentNode.parentNode.parentNode.querySelector('input')
+            if (inputEle) {
+                if (obj.length === selectCount) {
+                    inputEle.checked = true
+                } else {
+                    inputEle.checked = false
+                }
+            }
+        }
+
+        let headArr = globalData[0].value.split('')
+        let tailArr = globalData[1].value.split('')
+        let headSel = document.querySelectorAll('.headSel')
+        let tailSel = document.querySelectorAll('.tailSel')
+
+        let tempArr = []
+        let flag = 0
+        for (let i = 0; i < headSel.length; i++) {
+            if (headSel[i].checked) {
+                headArr.forEach(v => {
+                    if (v === headSel[i].nextSibling.innerHTML) {
+                        tempArr.push(v)
+                    }
+                })
+                flag = 1
+            }
+        }
+        if (flag === 1) {
+            headArr = tempArr
+        }
+
+        tempArr = []
+        flag = 0
+        for (let i = 0; i < tailSel.length; i++) {
+            if (tailSel[i].checked) {
+                tailArr.forEach(v => {
+                    if (v === tailSel[i].nextSibling.innerHTML) {
+                        tempArr.push(v)
+                    }
+                })
+                flag = 1
+            }
+        }
+        if (flag === 1) {
+            tailArr = tempArr
+        }
+
+        let objInfo = {
+            "headArr": headArr,
+            "tailArr": tailArr,
+            "inputValArr": inputValArr
+        }
+        handleData(objInfo)
+    }
+</script>
+
+<script>
+    // 获取查询结果
+    document.querySelector('button').addEventListener('click', () => {
+        let
+            selectedValArr = [],
+            inputGroup = document.querySelector('.content').querySelectorAll('input')
+        console.log(inputGroup);
+        for (let i = 0; i < inputGroup.length; i++) {
+            if (inputGroup[i].checked && inputGroup[i].parentNode.classList.contains('divLine')) {
+                selectedValArr.push(inputGroup[i].nextSibling.nextSibling.innerHTML)
+            }
+        }
+        console.log(selectedValArr)
+
+        let obj = {}
+        obj.keyWords = selectedValArr
+
+        $.ajax({
+            type: 'get',
+            url: '/queryData',
+            data: obj,
+            success: function(data) {
+                console.log(data)
+            },
+            error: function(err) {
+                console.log(err)
+            },
+            beforeSend: function() {
+                $('.loading').append('<img src="./common/loading.gif">')
+            }
+        })
+    })
+</script>
+
+<script>
+    var globalData, inputValArr
+    //处理数据请求及响应
+    function handle() {
+        inputValArr = $('#get-input').val().trim().split(" ")
+        $.ajax({
+            "type": "get",
+            "url": "/search",
+            "data": $.param({
+                'searchContent': inputValArr
+            }),
+            "success": function(data) {
+                if (parseInt(data) !== 0) {
+                    globalData = data
+                    let headArr = globalData[0].value.split('')
+                    let tailArr = globalData[1].value.split('')
+                    let obj = {
+                        "headArr": headArr,
+                        "tailArr": tailArr,
+                        "inputValArr": inputValArr
+                    }
+                    let evalTextList = doT.template($("#list-choice").text())
+                    $(".list-choice").html(evalTextList(obj))
+
+                    handleData(obj)
+                } else {
+                    $('.content').html('<h4>Not Found !</h4>')
+                    $('.list-choice').html('')
+                    $('.btn-center').hide()
+                }
+            },
+            error: function(err) {
+                console.log(err)
+            }
+        })
+    }
+
+    function handleData(obj) {
+
+        let evalTextContent = doT.template($("#content").text())
+        $(".content").html(evalTextContent(obj))
+
+        $('.btn-center').show()
+
+    }
+
+    $('#get-input').keyup(e => { //enter监听事件
+        if (e.keyCode === 13) {
+            handle()
+        }
+    })
+
+    $('#basic-addon2').click(() => { //点击事件
+        handle()
+    })
+
+
+    function gobalAll(ele) { //全局选中
+        if (ele.checked) {
+            $('#gobalAll-input').prop('checked', true)
+            $('.content input[type=checkbox]').prop('checked', true)
+        } else {
+            $('#gobalAll-input').prop('checked', false)
+            $('.content input[type=checkbox]').prop('checked', false)
+        }
+    }
+
+    function setGobalAll(ele) { //全局选择联动
+        var obj = document.getElementsByClassName(ele.parentNode.className)
+        var selectCount = 0
+        if (obj.length) {
+            for (let i = 0; i < obj.length; i++) {
+                if (obj[i].firstChild.checked === true) {
+                    selectCount++
+                }
+            }
+            if (obj.length === selectCount) {
+                document.querySelector('#gobalAll-input').checked = true
+            } else {
+                document.querySelector('#gobalAll-input').checked = false
+            }
+        }
+    }
+
+    function selectAll(ele) { //单个全选
+        if (ele.checked) {
+            ele.checked = true
+            ele.parentNode.parentNode.classList.add('selectLi')
+            $('.selectLi input').prop('checked', true)
+            ele.parentNode.parentNode.classList.remove('selectLi')
+        } else {
+            ele.checked = false
+            ele.parentNode.parentNode.classList.add('selectLi')
+            $('.selectLi input').prop('checked', false)
+            ele.parentNode.parentNode.classList.remove('selectLi')
+        }
+        setGobalAll(ele)
+    }
+
+    function setSelectAll(ele) { //单个全选联动
+        var obj = document.getElementsByClassName(ele.className)
+        var selectCount = 0
+        if (obj.length) {
+            for (let i = 0; i < obj.length; i++) {
+                if (obj[i].checked === true) {
+                    selectCount++
+                }
+            }
+            let inputEle = ele.parentNode.parentNode.firstChild.firstChild
+            if (inputEle) {
+                if (obj.length === selectCount) {
+                    inputEle.checked = true
+                } else {
+                    inputEle.checked = false
+                }
+            }
+        }
+    }
+</script>
+
+</html>
