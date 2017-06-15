@@ -3,11 +3,6 @@ const app = express()
 const dist = require('./dictionary.json')
 const request = require('request')
 
-// app.get('/test', (req,res) => {
-//     console.log(req.url)
-//     res.send('good')
-// })
-
 let
     promiseArr = [],
     responseArr = []

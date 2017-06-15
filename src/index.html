@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>zbl-prc</title>
@@ -90,7 +91,9 @@
         } else {
             $('.headSel').prop('checked', false)
         }
-        // headTailAll(ele)
+        $('#gobalAll-input').prop('checked', false)
+        $('.selectAll span').html('全选/反选')
+        filterFunc()
     }
 
     function selectTail(ele) {
@@ -99,11 +102,14 @@
         } else {
             $('.tailSel').prop('checked', false)
         }
-        // headTailAll(ele)
+        $('#gobalAll-input').prop('checked', false)
+        $('.selectAll span').html('全选/反选')
+        filterFunc()
     }
 
     function headTailAll(ele) { //联动
         $('#gobalAll-input').prop('checked', false)
+        $('.selectAll span').html('全选/反选')
         var obj = document.getElementsByClassName(ele.className)
         var selectCount = 0
         if (obj.length) {
@@ -121,7 +127,10 @@
                 }
             }
         }
+        filterFunc()
+    }
 
+    function filterFunc() {
         let headArr = globalData[0].value.split('')
         let tailArr = globalData[1].value.split('')
         let headSel = document.querySelectorAll('.headSel')
@@ -174,7 +183,6 @@
         let
             selectedValArr = [],
             inputGroup = document.querySelector('.content').querySelectorAll('input')
-        console.log(inputGroup);
         for (let i = 0; i < inputGroup.length; i++) {
             if (inputGroup[i].checked && inputGroup[i].parentNode.classList.contains('divLine')) {
                 selectedValArr.push(inputGroup[i].nextSibling.nextSibling.innerHTML)
@@ -182,13 +190,12 @@
         }
         console.log(selectedValArr)
 
-        let obj = {}
-        obj.keyWords = selectedValArr
-
         $.ajax({
             type: 'get',
             url: '/queryData',
-            data: obj,
+            data: $.param({
+                'keyWords': selectedValArr
+            }),
             success: function(data) {
                 console.log(data)
             },
@@ -196,6 +203,7 @@
                 console.log(err)
             },
             beforeSend: function() {
+                $('.loading').html('')
                 $('.loading').append('<img src="./common/loading.gif">')
             }
         })
@@ -203,8 +211,8 @@
 </script>
 
 <script>
+    // 处理数据请求及响应
     var globalData, inputValArr
-    //处理数据请求及响应
     function handle() {
         inputValArr = $('#get-input').val().trim().split(" ")
         $.ajax({
@@ -225,12 +233,12 @@
                     }
                     let evalTextList = doT.template($("#list-choice").text())
                     $(".list-choice").html(evalTextList(obj))
-
                     handleData(obj)
                 } else {
                     $('.content').html('<h4>Not Found !</h4>')
                     $('.list-choice').html('')
                     $('.btn-center').hide()
+                    $('.selectAll').hide()
                 }
             },
             error: function(err) {
@@ -239,13 +247,11 @@
         })
     }
 
-    function handleData(obj) {
-
+    function handleData(obj) {  // 过滤元素模板
         let evalTextContent = doT.template($("#content").text())
         $(".content").html(evalTextContent(obj))
-
         $('.btn-center').show()
-
+        $('.selectAll').show()
     }
 
     $('#get-input').keyup(e => { //enter监听事件
@@ -263,9 +269,19 @@
         if (ele.checked) {
             $('#gobalAll-input').prop('checked', true)
             $('.content input[type=checkbox]').prop('checked', true)
+            let
+                selectedValArr = [],
+                inputGroup = document.querySelector('.content').querySelectorAll('input')
+            for (let i = 0; i < inputGroup.length; i++) {
+                if (inputGroup[i].checked && inputGroup[i].parentNode.classList.contains('divLine')) {
+                    selectedValArr.push(inputGroup[i].nextSibling.nextSibling.innerHTML)
+                }
+            }
+            $('.selectAll span').html(`全选/反选 <b>选中${selectedValArr.length}个</b>`)
         } else {
             $('#gobalAll-input').prop('checked', false)
             $('.content input[type=checkbox]').prop('checked', false)
+            $('.selectAll span').html('全选/反选')
         }
     }
 
