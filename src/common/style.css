@@ -2,7 +2,7 @@
 
 body
 {
-    min-width: 400px;
+    min-width: 600px;
 }
 
 div.bg
@@ -17,13 +17,14 @@ div.bg
     background-size: cover;
 }
 
-.title
+div.title
 {
     width: 364px;
     height: 110px;
     margin: 0 auto;
     background: url(../resource/title.png) no-repeat center center;
     background-size: contain;
+    margin-top: 10%;
 }
 
 ul
@@ -38,7 +39,7 @@ ul
 
 .content
 {
-    overflow-y: auto;
+    overflow: auto;
     width: 60%;
     height: 200px;
     margin: 0 auto;
@@ -106,4 +107,49 @@ div.selectAll
 .list-choice-container > div > input
 {
     margin-right: 5px;
+}
+
+div.result-list {
+    overflow: hidden;
+    /*overflow-y: auto;*/
+    width: 65%;
+    height: 400px;
+    display: none;
+    margin: 0 auto;
+}
+
+table.table {
+    width: 100%;
+    margin: 0 auto;
+    border: 0px solid white;
+}
+
+table.table>thead th {
+    text-align: center;
+    border-bottom: 0 solid white;
+    border-right: 1px solid white;
+}
+
+table.table>thead th:first-child {
+    width: 20%;
+}
+
+table.table>tbody td {
+    border-right: 1px solid white;
+}
+
+table.table>tbody td:first-child {
+    text-align: center;
+    width: 20%;
+}
+
+div.goback {
+    float: none;
+    margin: 0 auto;
+    margin-top: 25px;
+    display: none;
+}
+
+.mCSB_inside > .mCSB_container {
+    margin-right: 10px !important;
 }

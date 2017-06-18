@@ -2,18 +2,23 @@ const express = require('express')
 const app = express()
 const dist = require('./dictionary.json')
 const request = require('request')
+const mockData = require('./mockdata.json')
 
-let
-    promiseArr = [],
-    responseArr = []
+
 app.get('/queryData', (req, res) => {
-    let keyWordsArr = req.query.keyWords
+    let
+        keyWordsArr = req.query.keyWords,
+        promiseArr = [],
+        responseArr = []
     keyWordsArr.forEach(keyword => {
         let url = `http://api.tmkoo.com/search.php?keyword=${keyword}&apiKey=4399320012393234&apiPassword=331nd3342d&pageSize=30&pageNo=1`
         promiseArr.push(new Promise((resolve, reject) => {
             request(encodeURI(url), (error, response, body) => {
                 if (!error && response.statusCode === 200) {
-                    responseArr.push(body)
+                    let obj = {}
+                    obj.keyword = keyword
+                    obj.resResult = JSON.parse(body)
+                    responseArr.push(obj)
                     resolve()
                 }
             })
@@ -26,6 +31,8 @@ app.get('/queryData', (req, res) => {
         console.log(err)
         res.send('error')
     })
+
+    // res.send(mockData)
 })
 
 

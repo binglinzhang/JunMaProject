@@ -6,6 +6,7 @@
     <title>zbl-prc</title>
     <link rel="stylesheet" href="./common/bootstrap.css">
     <link rel="stylesheet" href="./common/style.css">
+    <link rel="stylesheet" href="./common/jquery.mCustomScrollbar.css">
 </head>
 
 <body>
@@ -13,25 +14,34 @@
 
     <div class="title"></div>
 
-    <div class="input-group col-md-3 col-sm-3 col-xs-3 col-lg-3 input-center">
-        <input class="form-control" placeholder="输入拼音，中间以空格隔开" aria-describedby="basic-addon2" id='get-input'>
-        <span class="input-group-addon btn btn-info" id="basic-addon2">search</span>
+    <div class="showHide">
+
+        <div class="input-group col-md-3 col-sm-3 col-xs-3 col-lg-3 input-center">
+            <input class="form-control" placeholder="输入拼音，中间以空格隔开" aria-describedby="basic-addon2" id='get-input'>
+            <span class="input-group-addon btn btn-info" id="basic-addon2">search</span>
+        </div>
+        <div class="example">示例：you li</div>
+
+        <div class="list-choice"></div>
+
+        <div class="content"></div>
+
+        <div class="checkbox selectAll">
+            <input type="checkbox" id='gobalAll-input' onclick="gobalAll(this)"><span>全选/反选</span>
+        </div>
+
+        <div class="col-md-2 col-sm-2 col-xs-2 col-lg-2 btn-center">
+            <button class="btn btn-info btn-lg btn-block" id='nextStep'>下一步</button>
+        </div>
+        <div class="loading"></div>
+
     </div>
-    <div class="example">示例：you li</div>
 
-    <div class="list-choice"></div>
+    <div class="result-list"></div>
 
-    <div class="content"></div>
-
-    <div class="checkbox selectAll">
-        <input type="checkbox" id='gobalAll-input' onclick="gobalAll(this)"><span>全选/反选</span>
+    <div class="col-md-2 col-sm-2 col-lg-2 goback">
+        <button class="btn btn-info btn-lg btn-block" onclick='goback()'>返回</button>
     </div>
-
-    <div class="col-md-2 col-sm-2 col-lg-2 btn-center">
-        <button class="btn btn-info btn-lg btn-block">下一步</button>
-    </div>
-    <div class="loading"></div>
-
 
     <script id="list-choice" type="text/x-dot-template">
         <div class='list-choice-container'>
@@ -41,7 +51,9 @@
             <ul>
                 {{~it.headArr:value:index}}
                 <li>
-                    <div class='checkbox listChoice'><input type='checkbox' class='headSel' onclick='headTailAll(this)'><span>{{= value }}</span></div>
+                    <div class='checkbox listChoice'>
+                        <input type='checkbox' class='headSel' onclick='headTailAll(this)'><span>{{= value }}</span>
+                    </div>
                 </li>
                 {{~}}
             </ul>
@@ -54,7 +66,9 @@
             <ul>
                 {{~it.tailArr:value:index}}
                 <li>
-                    <div class='checkbox listChoice'><input type='checkbox' class='tailSel' onclick='headTailAll(this)'><span>{{= value }}</span></div>
+                    <div class='checkbox listChoice'>
+                        <input type='checkbox' class='tailSel' onclick='headTailAll(this)'><span>{{= value }}</span>
+                    </div>
                 </li>
                 {{~}}
             </ul>
@@ -80,11 +94,41 @@
         </ul>
     </script>
 
+    <script id="result-list" type="text/x-dot-template">
+        <table class="table table-hover table-striped">
+            <thead>
+                <tr class="info">
+                    <th>商标名</th>
+                    <th>可注册类</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{~it.array:obj:index}}
+                    {{? index%2 === 0 }}
+                    <tr class="success">
+                    {{??}}
+                    <tr class="danger">
+                    {{?}}
+                        <td>{{= obj.keyword }}</td>
+                        <td>
+                            {{~obj.resResult.facets:val}}
+                            <span>{{= val }}</span>
+                            {{~}}
+                        </td>
+                    </tr>
+                    {{~}}
+            </tbody>
+        </table>
+    </script>
+
 </body>
 <script src='./common/jquery-1.12.4.min.js'></script>
 <script src='./common/doT.min.js'></script>
+<script src='./common/bscroll.min.js'></script>
+<script src='./common/jquery.mCustomScrollbar.concat.min.js'></script>
 
 <script>
+    // 过滤筛选功能
     function selectHead(ele) {
         if (ele.checked) {
             $('.headSel').prop('checked', true)
@@ -173,13 +217,15 @@
             "tailArr": tailArr,
             "inputValArr": inputValArr
         }
+        // destroy滚动条，方便之后重新创建
+        $(".content").mCustomScrollbar('destroy')
         handleData(objInfo)
     }
 </script>
 
 <script>
     // 获取查询结果
-    document.querySelector('button').addEventListener('click', () => {
+    document.querySelector('#nextStep').addEventListener('click', () => {
         let
             selectedValArr = [],
             inputGroup = document.querySelector('.content').querySelectorAll('input')
@@ -190,70 +236,145 @@
         }
         console.log(selectedValArr)
 
-        $.ajax({
-            type: 'get',
-            url: '/queryData',
-            data: $.param({
-                'keyWords': selectedValArr
-            }),
-            success: function(data) {
-                console.log(data)
-            },
-            error: function(err) {
-                console.log(err)
-            },
-            beforeSend: function() {
-                $('.loading').html('')
-                $('.loading').append('<img src="./common/loading.gif">')
-            }
-        })
+        if (selectedValArr.length) {
+            $.ajax({
+                type: 'get',
+                url: '/queryData',
+                data: $.param({
+                    'keyWords': selectedValArr
+                }),
+                success: function(data) {
+                    if (data) {
+                        let searchResultArr = data
+                        handleResult(searchResultArr)
+                    }
+                },
+                error: function(err) {
+                    console.log(err)
+                },
+                beforeSend: function() {
+                    $('.loading').html('')
+                    $('.loading').append('<img src="./common/loading.gif">')
+                }
+            })
+        } else {
+            alert('请选择查询单元！')
+        }
     })
+
+    function handleResult(searchResultArr) {
+        $('.showHide').hide()
+        $('.result-list').show()
+        $('.goback').show()
+        let obj = {
+            'array': searchResultArr
+        }
+        let evalResultList = doT.template($("#result-list").text())
+        $(".result-list").html(evalResultList(obj))
+        $('.result-list').show()
+        //创建滚动条
+        $(".result-list").mCustomScrollbar({
+            theme: "light-thick"
+        })
+    }
+
+    function goback() {
+        $('.showHide').show()
+        $('.result-list').hide()
+        $('.goback').hide()
+        $(".result-list").mCustomScrollbar('destroy')
+    }
 </script>
 
 <script>
     // 处理数据请求及响应
     var globalData, inputValArr
+
     function handle() {
         inputValArr = $('#get-input').val().trim().split(" ")
-        $.ajax({
-            "type": "get",
-            "url": "/search",
-            "data": $.param({
-                'searchContent': inputValArr
-            }),
-            "success": function(data) {
-                if (parseInt(data) !== 0) {
-                    globalData = data
-                    let headArr = globalData[0].value.split('')
-                    let tailArr = globalData[1].value.split('')
-                    let obj = {
-                        "headArr": headArr,
-                        "tailArr": tailArr,
-                        "inputValArr": inputValArr
+        if (inputValArr.length) {
+            $.ajax({
+                "type": "get",
+                "url": "/search",
+                "data": $.param({
+                    'searchContent': inputValArr
+                }),
+                "success": function(data) {
+                    if (parseInt(data) !== 0) {
+                        globalData = data
+                        let headArr = globalData[0].value.split('')
+                        let tailArr = globalData[1].value.split('')
+                        let obj = {
+                            "headArr": headArr,
+                            "tailArr": tailArr,
+                            "inputValArr": inputValArr
+                        }
+                        let evalTextList = doT.template($("#list-choice").text())
+                        $(".list-choice").html(evalTextList(obj))
+
+                        handleData(obj)
+
+                        $('.btn-center').show()
+                        $('.selectAll').show()
+                        // logo向上移位
+                        if ($('div.title').css('margin-top') !== '0') {
+                            $('div.title').css('margin-top', '0')
+                            // $('div.title').css('transition','margin-top 1s')
+                        }
+                    } else {
+                        $('.content').html('<h4>Not Found !</h4>')
+                        $('.list-choice').html('')
+                        $('.btn-center').hide()
+                        $('.selectAll').hide()
+                        $('div.title').css('margin-top', '10%')
                     }
-                    let evalTextList = doT.template($("#list-choice").text())
-                    $(".list-choice").html(evalTextList(obj))
-                    handleData(obj)
-                } else {
-                    $('.content').html('<h4>Not Found !</h4>')
-                    $('.list-choice').html('')
-                    $('.btn-center').hide()
-                    $('.selectAll').hide()
+                },
+                error: function(err) {
+                    console.log(err)
                 }
-            },
-            error: function(err) {
-                console.log(err)
-            }
-        })
+            })
+        } else {
+            alert('请输入拼音查询！')
+        }
+
     }
 
-    function handleData(obj) {  // 过滤元素模板
+    function handleData(obj) { // 过滤元素模板
         let evalTextContent = doT.template($("#content").text())
         $(".content").html(evalTextContent(obj))
-        $('.btn-center').show()
-        $('.selectAll').show()
-    }
 
+        // 创建scrollbar滚动条
+        $(".content").mCustomScrollbar({
+            theme: "rounded",
+            advanced: {
+                updateOnBrowserResize: true
+            }
+        })
+
+        // better-scroll滚动功能
+        // setTimeout(() => {
+        //     if (document.querySelector('.content').innerHTML) {
+        //         new BScroll(document.querySelector('.content'))
+        //     }
+        // }, 20) // 20毫秒为dom重载周期，为经验数据
+
+        // 另一个方式
+        // let tempArr = []
+        // tempArr.push(new Promise((resolve,reject) => {
+        //     let evalTextContent = doT.template($("#content").text())
+        //     $(".content").html(evalTextContent(obj))
+        //     resolve()
+        // }))
+        // Promise.all(tempArr).then(() => {
+        //     if (document.querySelector('.content').innerHTML) {
+        //         new BScroll(document.querySelector('.content'))
+        //     }
+        // })
+    }
+</script>
+
+<script>
+    // 处理选择状态
     $('#get-input').keyup(e => { //enter监听事件
         if (e.keyCode === 13) {
             handle()

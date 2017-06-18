@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title></title>
+</head>
+
+<body>
+
+</body>
+<script src='./common/jquery-1.12.4.min.js'></script>
+<script src="http://mockjs.com/dist/mock.js"></script>
+<script type="text/javascript">
+    Mock.mock(/\/getdata/, {
+        'array|1-10': ['987','645','123']
+    })
+    $.ajax({
+        type: 'get',
+        url: '/getdata',
+        success: data => {
+            console.log(data)
+        }
+    })
+</script>
+
+</html>
